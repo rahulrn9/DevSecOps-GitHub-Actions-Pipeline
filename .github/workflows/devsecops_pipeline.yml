@@ -25,7 +25,7 @@ jobs:
           npm install -g snyk
           snyk auth ${{ secrets.SNYK_TOKEN }}
 
-      - name: Checkov Scan (Terraform)
+     - name: Checkov Scan (Terraform)
         run: checkov -d iac --output json > reports/checkov_report.json
 
       - name: Trivy Scan (Container)
