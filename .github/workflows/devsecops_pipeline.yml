@@ -1,0 +1,35 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      - name: Install IaC/Container Scanners
+        run: |
+          pip install checkov
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+          npm install -g snyk
+          snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Checkov Scan (Terraform)
+        run: checkov -d iac --output json > reports/checkov_report.json
+
+      - name: Trivy Scan (Container)
+        run: ./trivy image --format json --output reports/trivy_report.json nginx:latest
+
+      - name: Snyk Scan (Open Source Vulns)
+        run: snyk test --json-file-output=reports/snyk_report.json || true
